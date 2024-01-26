@@ -1,6 +1,7 @@
 
 public class Tetrominoe {
 
+ public static final Tetrominoe SQUARE_SHAPE = null;
  public static Tetrominoe NoShape;
 
  public int getValue() {
