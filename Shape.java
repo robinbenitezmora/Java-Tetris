@@ -5,13 +5,12 @@ import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import Tetrominoe;
 import javafx.scene.paint.Color;
-import Tetrominoe;
-import Tetrominoe;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Rectangle;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.Color;
 
@@ -122,7 +121,32 @@ class Shape {
 }
 
 enum Tetrominoe {
-  NO_SHAPE, ZShape, SShape, LineShape, TShape, SquareShape, LShape, MirroredLShape, SQUARE_SHAPE, NoShape
+  NO_SHAPE, ZShape, SShape, LineShape, TShape, SquareShape, LShape, MirroredLShape, SQUARE_SHAPE, NoShape;
+
+  int getValue() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getValue'");
+  }
+
+  int getRed() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getRed'");
+  }
+
+  int getGreen() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getGreen'");
+  }
+
+  float getSaturation() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getSaturation'");
+  }
+
+  float getBrightness() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getBrightness'");
+  }
 };
 
 class Board extends JPanel {
@@ -147,7 +171,7 @@ class Board extends JPanel {
 
   public Board(Tetris parent) {
     setFocusable(true);
-    setBorder(BorderFactory.createLineBorder(Color.BLACK));
+    setBorder(BorderFactory.createDashedBorder(Color.BLACK));
     timer = new Timer();
     timer.scheduleAtFixedRate(new ScheduleTask(), (long) INITIAL_DELAY, (long) PERIOD_INTERVAL);
 
@@ -164,7 +188,7 @@ class Board extends JPanel {
     throw new UnsupportedOperationException("Unimplemented method 'clearBoard'");
   }
 
-  init squareWidth() {
+  int squareWidth() {
     return (int) getSize().getWidth() / BOARD_WIDTH;
   }
 
@@ -202,22 +226,6 @@ class Board extends JPanel {
   void doDrawing(Graphics g) {
     Dimension size = getSize();
     int boardTop = (int) size.getHeight() - BOARD_HEIGHT * squareHeight();
-
-    for (int i = 0; i < BOARD_HEIGHT; ++i) {
-      for (int j = 0; j < BOARD_WIDTH; ++j) {
-        Tetrominoe shape = shapeAt(j, BOARD_HEIGHT - i - 1);
-        if (shape != Tetrominoe.NoShape)
-          drawSquare(g, 0 + j * squareWidth(), boardTop + i * squareHeight(), shape);
-      }
-    }
-
-    if (curPiece.getShape() != Tetrominoe.NoShape) {
-      for (int i = 0; i < 4; ++i) {
-        int x = curX + curPiece.x(i);
-        int y = curY - curPiece.y(i);
-        drawSquare(g, 0 + x * squareWidth(), boardTop + (BOARD_HEIGHT - y - 1) * squareHeight(), curPiece.getShape());
-      }
-    }
   }
 
   @Override
@@ -277,37 +285,118 @@ class Board extends JPanel {
       newPiece();
   }
 
-void removeFullLines() {
-  int numFullLines = 0;
+  void removeFullLines() {
+    int numFullLines = 0;
 
-  for (int i = BOARD_HEIGHT - 1; i >= 0; --i) {
-    boolean lineIsFull = true;
+    for (int i = BOARD_HEIGHT - 1; i >= 0; --i) {
+      boolean lineIsFull = true;
 
-    for (int j = 0; j < BOARD_WIDTH; ++j) {
-      if (shapeAt(j, i) == Tetrominoe.NoShape) {
-        lineIsFull = false;
-        break;
+      for (int j = 0; j < BOARD_WIDTH; ++j) {
+        if (shapeAt(j, i) == Tetrominoe.NoShape) {
+          lineIsFull = false;
+          break;
+        }
+      }
+
+      if (lineIsFull) {
+        ++numFullLines;
+        for (int k = i; k < BOARD_HEIGHT - 1; ++k) {
+          for (int j = 0; j < BOARD_WIDTH; ++j) {
+            board[(k * BOARD_WIDTH) + j] = shapeAt(j, k + 1);
+          }
+        }
       }
     }
 
-    if (lineIsFull) {
-      ++numFullLines;
-      for (int k = i; k < BOARD_HEIGHT - 1; ++k) {
-        for (int j = 0; j < BOARD_WIDTH; ++j)
-          board[(k * BOARD_WIDTH) + j] = shapeAt(j, k + 1);
+    if (numFullLines > 0)
+
+    {
+      numLinesRemoved += numFullLines;
+      statusbar.setText(String.valueOf(numLinesRemoved));
+      isFallingFinished = true;
+      curPiece.setShape(Tetrominoe.NoShape);
+      repaint();
+    }
+  }
+
+  void drawSquare(Graphics g, int x, int y, Tetrominoe shape) {
+    // ...
+
+    float[] hsb = new float[] { shape.getValue(), shape.getSaturation(), shape.getBrightness() };
+    javafx.scene.paint.Color color;
+    javafx.scene.paint.Color awtColor = new Color((int) (color.getRed() * 255), (int) (color.getGreen() * 255),
+        (int) (color.getBlue() * 255), (int) (getAlignmentX() * 255));
+    g.setColor(awtColor);
+    g.fillRect(x + 1, y + 1, squareWidth() - 2, squareHeight() - 2);
+    g.setColor(awtColor.brighter());
+    g.drawLine(x, y + squareHeight() - 1, x, y);
+    g.drawLine(x, y, x + squareWidth() - 1, y);
+    g.setColor(awtColor.darker());
+    g.drawLine(x + 1, y + squareHeight() - 1, x + squareWidth() - 1, y + squareHeight() - 1);
+    g.drawLine(x + squareWidth() - 1, y + squareHeight() - 1, x + squareWidth() - 1, y + 1);
+  }
+
+  void drawBoard(Graphics g) {
+    for (int i = 0; i < BOARD_HEIGHT; ++i) {
+      for (int j = 0; j < BOARD_WIDTH; ++j) {
+        Tetrominoe shape = shapeAt(j, BOARD_HEIGHT - i - 1);
+        if (shape != Tetrominoe.NoShape)
+          drawSquare(g, j * squareWidth(), (BOARD_HEIGHT - i - 1) * squareHeight(), shape);
       }
     }
   }
-}
 
-  if(numFullLines>0)
+  class ScheduleTask extends java.util.TimerTask {
+    public void run() {
+      if (isFallingFinished) {
+        isFallingFinished = false;
+        newPiece();
+      } else {
+        oneLineDown();
+      }
+    }
+  }
 
-  {
-    int numFullLines;
-    numLinesRemoved += numFullLines;
-    statusbar.setText(String.valueOf(numLinesRemoved));
-    isFallingFinished = true;
-    curPiece.setShape(Tetrominoe.NoShape);
-    repaint();
+  class TAdapter extends KeyAdapter {
+    public void keyPressed(KeyEvent e) {
+      if (!isStarted || curPiece.getShape() == Tetrominoe.NoShape) {
+        return;
+      }
+
+      int keycode = e.getKeyCode();
+
+      if (keycode == 'p' || keycode == 'P') {
+        pause();
+        return;
+      }
+
+      if (isPaused)
+        return;
+
+      switch (keycode) {
+        case KeyEvent.VK_LEFT:
+          tryMove(curPiece, curX - 1, curY);
+          break;
+        case KeyEvent.VK_RIGHT:
+          tryMove(curPiece, curX + 1, curY);
+          break;
+        case KeyEvent.VK_DOWN:
+          tryMove(curPiece.rotateRight(), curX, curY);
+          break;
+        case KeyEvent.VK_UP:
+          tryMove(curPiece.rotateLeft(), curX, curY);
+          break;
+        case KeyEvent.VK_SPACE:
+          dropDown();
+          break;
+        case 'd':
+          oneLineDown();
+          break;
+        case 'D':
+          oneLineDown();
+          break;
+      }
+
+    }
   }
 }
