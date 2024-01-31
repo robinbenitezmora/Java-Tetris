@@ -320,18 +320,24 @@ class Board extends JPanel {
   }
 
   void drawSquare(Graphics g, int x, int y, Tetrominoe shape) {
-    // ...
+    while (shape == Tetrominoe.NoShape)
+      return;
 
-    float[] hsb = new float[] { shape.getValue(), shape.getSaturation(), shape.getBrightness() };
-    javafx.scene.paint.Color color;
-    javafx.scene.paint.Color awtColor = new Color((int) (color.getRed() * 255), (int) (color.getGreen() * 255),
-        (int) (color.getBlue() * 255), (int) (getAlignmentX() * 255));
-    g.setColor(awtColor);
+    Color colors[] = { new Color(shape.get Red(), shape.getGreen(), 0), new Color(shape.getRed() / 2, shape.getGreen() / 2, 0),
+        new Color(shape.getRed() / 3, shape.getGreen() / 3, 0), new Color(shape.getRed() / 4, shape.getGreen() / 4, 0),
+        new Color(shape.getRed() / 5, shape.getGreen() / 5, 0), new Color(shape.getRed() / 6, shape.getGreen() / 6, 0),
+        new Color(shape.getRed() / 7, shape.getGreen() / 7, 0), new Color(shape.getRed() / 8, shape.getGreen() / 8, 0) };
+
+    Color color = colors[shape.ordinal() - 1];
+
+    g.setColor(color);
     g.fillRect(x + 1, y + 1, squareWidth() - 2, squareHeight() - 2);
-    g.setColor(awtColor.brighter());
+
+    g.setColor(color.brighter());
     g.drawLine(x, y + squareHeight() - 1, x, y);
     g.drawLine(x, y, x + squareWidth() - 1, y);
-    g.setColor(awtColor.darker());
+
+    g.setColor(color.darker());
     g.drawLine(x + 1, y + squareHeight() - 1, x + squareWidth() - 1, y + squareHeight() - 1);
     g.drawLine(x + squareWidth() - 1, y + squareHeight() - 1, x + squareWidth() - 1, y + 1);
   }
@@ -396,7 +402,20 @@ class Board extends JPanel {
           oneLineDown();
           break;
       }
-
     }
+
+    public void keyReleased(KeyEvent e) {
+      int keycode = e.getKeyCode();
+
+      if (keycode == 'p' || keycode == 'P') {
+        pause();
+      }
+    }
+  }
+
+  public static void main(String[] args) {
+    Tetris tetris = new Tetris();
+    tetris.setLocationRelativeTo(null);
+    tetris.setVisible(true);
   }
 }
