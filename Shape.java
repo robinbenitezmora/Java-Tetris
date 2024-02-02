@@ -2,16 +2,20 @@ import java.util.Random;
 import java.util.Timer;
 
 import javax.swing.BorderFactory;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import javafx.scene.paint.Color;
 import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.BorderLayout;
 import java.awt.Color;
 
 class Shape {
@@ -170,22 +174,32 @@ class Board extends JPanel {
   Tetrominoe[] board; // Declare the 'board' variable
 
   public Board(Tetris parent) {
+    initBoard(parent);
+  }
+
+  class ScheduleTask extends TimerTask {
+    public void run() {
+      // Add the necessary logic here
+    }
+  }
+
+  void initBoard(Tetris parent) {
     setFocusable(true);
-    setBorder(BorderFactory.createDashedBorder(Color.BLACK));
+    setBorder(BorderFactory.createLineBorder(Color.pink, 4));
     timer = new Timer();
     timer.scheduleAtFixedRate(new ScheduleTask(), (long) INITIAL_DELAY, (long) PERIOD_INTERVAL);
-
     curPiece = new Shape();
 
     statusbar = parent.getStatusBar();
-    board = new Tetrominoe[BOARD_WIDTH * BOARD_HEIGHT]; // Initialize the 'board' variable
-    addKeyListener((KeyListener) new TAdapter());
+    board = new Tetrominoe[BOARD_WIDTH * BOARD_HEIGHT];
+    addKeyListener(new TAdapter());
     clearBoard();
   }
 
-  private void clearBoard() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'clearBoard'");
+  void clearBoard() {
+    for (int i = 0; i < BOARD_HEIGHT * BOARD_WIDTH; ++i) {
+      board[i] = Tetrominoe.NoShape;
+    }
   }
 
   int squareWidth() {
@@ -207,8 +221,16 @@ class Board extends JPanel {
   }
 
   private void newPiece() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'newPiece'");
+    curPiece.setRandomShape(); // set the shape of the piece to a random shape
+    curX = BOARD_WIDTH / 2 + 1; // set the x coordinate of the piece to the middle of the board
+    curY = BOARD_HEIGHT - 1 + curPiece.minY();
+
+    if (!tryMove(curPiece, curX, curY)) { // if the piece cannot move to the new coordinates
+      curPiece.setShape(Tetrominoe.NoShape); // set the shape of the piece to a no shape
+      timer.cancel();
+      isStarted = false;
+      statusbar.setText("GAME OVER!");
+    }
   }
 
   void pause() {
@@ -286,49 +308,59 @@ class Board extends JPanel {
   }
 
   void removeFullLines() {
-    int numFullLines = 0;
 
-    for (int i = BOARD_HEIGHT - 1; i >= 0; --i) {
-      boolean lineIsFull = true;
+    int numFullLines = 0; // set the number of full lines to 0
 
-      for (int j = 0; j < BOARD_WIDTH; ++j) {
-        if (shapeAt(j, i) == Tetrominoe.NoShape) {
-          lineIsFull = false;
-          break;
+    for (int i = BOARD_HEIGHT - 1; i >= 0; --i) { // for the no of rows in the board
+      boolean lineIsFull = true; // set the line is full to true
+
+      for (int j = 0; j < BOARD_WIDTH; ++j) { // for the no of columns in the board
+
+        if (shapeAt(j, i) == Tetrominoe.NoShape) { // if the shape at the coordinates is a no shape
+
+          lineIsFull = false; // set the line is full to false
+          break; // break the loop
         }
       }
 
-      if (lineIsFull) {
-        ++numFullLines;
-        for (int k = i; k < BOARD_HEIGHT - 1; ++k) {
-          for (int j = 0; j < BOARD_WIDTH; ++j) {
-            board[(k * BOARD_WIDTH) + j] = shapeAt(j, k + 1);
+      if (lineIsFull) { // if the line is full
+
+        ++numFullLines; // increment the number of full lines
+
+        for (int k = i; k < BOARD_HEIGHT - 1; ++k) { // for the no of rows in the board
+          for (int j = 0; j < BOARD_WIDTH; ++j) { // for the no of columns in the board
+
+            board[(k * BOARD_WIDTH) + j] = shapeAt(j, k + 1); // set the shape at the coordinates to the shape at the
+                                                              // coordinates below
           }
         }
       }
     }
 
-    if (numFullLines > 0)
+    if (numFullLines > 0) { // if the number of full lines is greater than 0
 
-    {
-      numLinesRemoved += numFullLines;
-      statusbar.setText(String.valueOf(numLinesRemoved));
-      isFallingFinished = true;
-      curPiece.setShape(Tetrominoe.NoShape);
+      numLinesRemoved += numFullLines; // increment the number of lines removed by the number of full lines
+      statusbar.setText("Score: " + String.valueOf(numLinesRemoved)); // set the text of the score to the number of
+                                                                      // lines removed
+      isFallingFinished = true; // set the piece has finished falling to true
+      curPiece.setShape(Tetrominoe.NoShape); // set the shape of the piece to a no shape
       repaint();
     }
   }
 
-  void drawSquare(Graphics g, int x, int y, Tetrominoe shape) {
-    while (shape == Tetrominoe.NoShape)
-      return;
+  // draw the square on the board
+  void drawSquare(Graphics g, int x, int y,
+      Tetrominoe shape) {
 
-    Color colors[] = { new Color(shape.get Red(), shape.getGreen(), 0), new Color(shape.getRed() / 2, shape.getGreen() / 2, 0),
-        new Color(shape.getRed() / 3, shape.getGreen() / 3, 0), new Color(shape.getRed() / 4, shape.getGreen() / 4, 0),
-        new Color(shape.getRed() / 5, shape.getGreen() / 5, 0), new Color(shape.getRed() / 6, shape.getGreen() / 6, 0),
-        new Color(shape.getRed() / 7, shape.getGreen() / 7, 0), new Color(shape.getRed() / 8, shape.getGreen() / 8, 0) };
+    Color colors[] = {
+        new Color(0, 0, 0), new Color(204, 102, 102),
+        new Color(102, 204, 102), new Color(102, 102, 204),
+        new Color(204, 204, 102), new Color(204, 102, 204),
+        new Color(102, 204, 204), new Color(218, 170, 0),
 
-    Color color = colors[shape.ordinal() - 1];
+    };
+
+    Color color = colors[shape.ordinal()];
 
     g.setColor(color);
     g.fillRect(x + 1, y + 1, squareWidth() - 2, squareHeight() - 2);
@@ -338,84 +370,134 @@ class Board extends JPanel {
     g.drawLine(x, y, x + squareWidth() - 1, y);
 
     g.setColor(color.darker());
-    g.drawLine(x + 1, y + squareHeight() - 1, x + squareWidth() - 1, y + squareHeight() - 1);
-    g.drawLine(x + squareWidth() - 1, y + squareHeight() - 1, x + squareWidth() - 1, y + 1);
+    g.drawLine(x + 1, y + squareHeight() - 1,
+        x + squareWidth() - 1, y + squareHeight() - 1);
+    g.drawLine(x + squareWidth() - 1, y + squareHeight() - 1,
+        x + squareWidth() - 1, y + 1);
+
   }
 
-  void drawBoard(Graphics g) {
-    for (int i = 0; i < BOARD_HEIGHT; ++i) {
-      for (int j = 0; j < BOARD_WIDTH; ++j) {
-        Tetrominoe shape = shapeAt(j, BOARD_HEIGHT - i - 1);
-        if (shape != Tetrominoe.NoShape)
-          drawSquare(g, j * squareWidth(), (BOARD_HEIGHT - i - 1) * squareHeight(), shape);
-      }
+  void doGameCycle() {
+
+    update();
+    repaint();
+  }
+
+  void update() {
+
+    if (isPaused) { // if the game is paused
+      return; // return
+    }
+
+    if (isFallingFinished) { // if the piece has finished falling
+
+      isFallingFinished = false; // set the piece has finished falling to false
+      newPiece(); // create a new piece
+    } else {
+
+      oneLineDown(); // move the piece down one line
     }
   }
 
-  class ScheduleTask extends java.util.TimerTask {
-    public void run() {
-      if (isFallingFinished) {
-        isFallingFinished = false;
-        newPiece();
-      } else {
-        oneLineDown();
-      }
-    }
-  }
-
+  // used to check the pressed keys
   class TAdapter extends KeyAdapter {
+
+    @Override
     public void keyPressed(KeyEvent e) {
-      if (!isStarted || curPiece.getShape() == Tetrominoe.NoShape) {
+
+      if (!isStarted || curPiece.getShape() == Tetrominoe.NoShape) { // if the game has not started or the shape of the
+                                                                     // piece is a no shape
+        return; // return
+      }
+
+      int keycode = e.getKeyCode(); // get the key code of the pressed key
+
+      if (keycode == KeyEvent.VK_ENTER) { // if the pressed key is the enter key
+        pause(); // pause the game
+        return; // return
+      }
+
+      if (isPaused) {
         return;
       }
 
-      int keycode = e.getKeyCode();
+      switch (keycode) { // switch the key code of the pressed key
 
-      if (keycode == 'p' || keycode == 'P') {
-        pause();
-        return;
-      }
+        case KeyEvent.VK_LEFT: // if the pressed key is the left arrow
+          tryMove(curPiece, curX - 1, curY); // try to move the piece to the left
+          break;
 
-      if (isPaused)
-        return;
+        case KeyEvent.VK_RIGHT: // if the pressed key is the right arrow
+          tryMove(curPiece, curX + 1, curY); // try to move the piece to the right
+          break;
 
-      switch (keycode) {
-        case KeyEvent.VK_LEFT:
-          tryMove(curPiece, curX - 1, curY);
+        case KeyEvent.VK_DOWN: // if the pressed key is the down arrow
+          tryMove(curPiece.rotateRight(), curX, curY); // try to rotate the piece to the right
           break;
-        case KeyEvent.VK_RIGHT:
-          tryMove(curPiece, curX + 1, curY);
-          break;
-        case KeyEvent.VK_DOWN:
-          tryMove(curPiece.rotateRight(), curX, curY);
-          break;
-        case KeyEvent.VK_UP:
-          tryMove(curPiece.rotateLeft(), curX, curY);
-          break;
-        case KeyEvent.VK_SPACE:
-          dropDown();
-          break;
-        case 'd':
-          oneLineDown();
-          break;
-        case 'D':
-          oneLineDown();
-          break;
-      }
-    }
 
-    public void keyReleased(KeyEvent e) {
-      int keycode = e.getKeyCode();
+        case KeyEvent.VK_UP: // if the pressed key is the up arrow
+          tryMove(curPiece.rotateLeft(), curX, curY); // try to rotate the piece to the left
+          break;
 
-      if (keycode == 'p' || keycode == 'P') {
-        pause();
+        case KeyEvent.VK_SPACE: // if the pressed key is the space bar
+          dropDown(); // drop the piece down
+          break;
+
+        case KeyEvent.VK_D: // if the pressed key is the d key
+          oneLineDown(); // move the piece down one line
+          break;
       }
     }
   }
 
+}
+
+// main class of the game
+class Tetris extends JFrame {
+
+  static final long serialVersionUID = 1L;
+  JLabel statusbar;
+
+  public Tetris() {
+
+    initUI();
+  }
+
+  void initUI() {
+
+    JPanel panel = new JPanel();
+    panel.setForeground(new Color(0XF5EBE0));
+
+    statusbar = new JLabel("Score: 0");
+    statusbar.setFont(new Font("MV Boli", Font.BOLD, 30));
+    panel.add(statusbar, BorderLayout.NORTH);
+
+    Board board = new Board(this);
+    add(panel, BorderLayout.NORTH);
+    add(board);
+    double securityWarningPointX;
+    board.setBackground(new Color(0Xf0e2d3, securityWarningPointX, securityWarningPointX, securityWarningPointX));
+    board.start();
+
+    setTitle("Tetris");
+    setSize(400, 600);
+    setDefaultCloseOperation(EXIT_ON_CLOSE);
+    setResizable(false);
+    setLocationRelativeTo(null);
+  }
+
+  public JLabel getStatusBar() {
+
+    return statusbar;
+  }
+
+  // run the game from here
   public static void main(String[] args) {
-    Tetris tetris = new Tetris();
-    tetris.setLocationRelativeTo(null);
-    tetris.setVisible(true);
+
+    EventQueue.invokeLater(() -> {
+
+      Tetris game = new Tetris();
+      game.setVisible(true);
+    });
   }
 }
